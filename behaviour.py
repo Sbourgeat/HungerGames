@@ -1,5 +1,5 @@
 """
-This module allow the simulation of a fruit fly inside a virtual 3D arena based on research conducted at Jaksic lab EPFL.
+This module allows the simulation of a fruit fly inside a virtual 3D arena based on research conducted at Jaksic lab EPFL.
 The code was created by Samuel Bourgeat, PhD student at EPFL.
 
 The class fly contains a reinforcment learning model and the script needed to simulate the behaviour of a fly in sim().
