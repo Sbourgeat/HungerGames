@@ -14,8 +14,10 @@ from tqdm import tqdm
 
 
 
-#
-N = 1360/2
+# Effective size
+N = int(1360/2)
+
+
 mu_cognition = 0.5 # alpha
 mu_speed = 50 # cm.sec-1
 mu_fecundity = 10
@@ -50,7 +52,7 @@ fecundity = np.random.normal(mu_fecundity, sigma_fecundity, N)
 # FLy ait speed 15 mm/sec https://elifesciences.org/articles/65878
 
 
-N = 1360/2
+
 
 mu_cognition = 50 #mm
 
@@ -75,7 +77,7 @@ def biase (dist):
 
 mu_biases = 50
 sigma_biases = 5
-N = 1360
+
 
 Biases = np.random.normal(mu_biases, sigma_biases, N)
 
