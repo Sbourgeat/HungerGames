@@ -76,13 +76,14 @@ class fly:
 
     """
     
-    def __init__(self, speed: float, cognition: float, tshift: float, nTot: float, alpha: float, bias: list) -> None:
+    def __init__(self, speed: float, cognition: float, tshift: float, nTot: float, alpha: float, bias: list, dt : float) -> None:
         self.speed = speed
         self.cognition = cognition
         self.tshift = tshift
         self.nTot = nTot
         self.alpha = alpha
         self.bias = bias
+        self.dt = dt
         #self.v = v
         #self.Lambda = Lambda
         
@@ -90,25 +91,28 @@ class fly:
 
 
 
-    def RL (v, alpha, Lambda = 1):
-        val = sum(v)
-        #print('Val =', val)
-        pred_err = Lambda - val
-        val_change = alpha * pred_err
-        v = v[-1] + val_change
-        #print(v)
-        return v
+    
 
 
     def sim(self) -> list:
-
+        
+        def RL (v, alpha, Lambda = 1):
+            val = sum(v)
+            #print('Val =', val)
+            pred_err = Lambda - val
+            val_change = alpha * pred_err
+            v = v[-1] + val_change
+            #print(v)
+            return v
+        
 
         speed = self.speed
         cognition = self.cognition
         tshift = self.tshift
         nTot = self.nTot
-        alpah = self.alpha
+        alpha = self.alpha
         bias = self.bias
+        dt = self.dt
 
         #fig = plt.figure(figsize=(10,10),dpi=500)
         #ax = fig.add_subplot(1, 1, 1,projection='3d')
@@ -124,21 +128,28 @@ class fly:
         #ax.scatter(80,0,100, 'ro')
         #ax.scatter(20,0,100, 'ro')    
         
+
+        # Add the entrances location
         e1 = [80,0,40]
         e2 = [20,0,40]
         e3 = [80,0,100]
         e4 = [20,0,100]
         
+        # Create boundaries
         xlims = [0,120]
         ylims = [0,120]
         zlims = [0,160]
         
         
-        dt = 1/60 #msec
-        shift = int(tshift)# *(1+speed))
-        n = int((nTot) *(1/dt)) # sec
+        # Main parameters
+        #dt = 1/60 #msec
+        shift = int(tshift * 1/dt) # *(1+speed)) # in msec
+        #n = int((nTot) *(1/dt)) # sec or the total number of steps allowed
+        n = int(nTot* 1/dt)
+        #print(n)
         nShift = n/shift
         tempoShift = [(i+1)*shift for i in range(int(nShift))]
+        #(f"tempoShift = {tempoShift}ms and n = {n}ms")
         Consumption = 0
         Strength = [0.00001]
         Strength_biase = [0.00001]
@@ -152,10 +163,11 @@ class fly:
         
         trial = 0 # nb of attemps to learn the association
         
-        speed = speed
+        speed = speed*10*dt  #convert cm/sec in mm/sec
         
         
-        
+        # Create intermediate bias and cognition values
+        # N_param will change in function of the fly learning stage
         N_cognition = cognition * Strength[-1]
         N_bias1 = bias[0] * Strength_biase[-1]
         N_bias2 = bias[1] * Strength_biase[-1]
@@ -163,17 +175,21 @@ class fly:
         N_bias4 = bias[3] * Strength_biase[-1]
         #Lambda = cognition
         
+        # V is the number of good choices (Victory)
         V = 0
         
+
         I = [0]
         
         X= []
         Y= []
         Z= []
         
-        Food = [0,1,0,0] #Where's the food at t = 0
+        Food = [0,1,0,0] # Where the is food at t = 0
         #print(Food)
         Sector = 0 # Sector at t = 0
+
+        # Choose randomnly where the good and bad entrances are.
         E = []
         for sec in range(4):
             E.append(random.sample([e1,e2,e3,e4],4))
@@ -195,6 +211,7 @@ class fly:
                 X.append(x0)
                 Y.append(y0)
                 Z.append(z0)
+                #print(f"congition is {N_cognition}")
                 
             
             elif i !=0 :
@@ -211,7 +228,9 @@ class fly:
                     D3 = math.sqrt((entrance3[0] - X[i-1])**2 + (entrance3[1] - Y[i-1])**2 + (entrance3[2] - Z[i-1])**2)
                     D4 = math.sqrt((entrance4[0] - X[i-1])**2 + (entrance4[1] - Y[i-1])**2 + (entrance4[2] - Z[i-1])**2)
                 
-                    if D1 <= N_cognition + (N_bias1 * (1-Strength[-1])) or D2 <= N_cognition + (N_bias2 * (1-Strength[-1])):
+                    if D1 <= N_cognition + (N_bias1 * (1-Strength[-1])) + 10 * (1-Strength[-1]) and D1 <= D3 and D1 <= D4 or D2 <= N_cognition + (N_bias2 * (1-Strength[-1])) + 10 * (1-Strength[-1]) and D2 <= D3 and D2 <= D4:
+                        #print(D1,D2,D3,D4)
+                        #print(f"cognition is {N_cognition}")
                         #print('Good job',i)
                         #print("trial at t=", i)
                         trial +=1
@@ -244,6 +263,8 @@ class fly:
                 
             
                     elif D3<= 10 + (N_bias3 * (1-Strength[-1]) * (1 - Strength_biase[-1])) or D4 <= 10 + (N_bias4 * (1-Strength[-1]) * (1 - Strength_biase[-1])):
+                        #print(D1,D2,D3,D4)
+                        #print(f"cognition is {N_cognition}")
                         #print('Dommage!',i)
                         trial_B +=1
                         #print("trial at t=", i)
@@ -257,9 +278,9 @@ class fly:
                     
                     else:
                 
-                        xi = X[i-1] + np.random.normal(0,1)* 0.5 # 0.5 is dt
-                        yi = Y[i-1] + np.random.normal(0,1)* 0.5
-                        zi = Z[i-1] + np.random.normal(0,1)* 0.5
+                        xi = X[i-1] + np.random.normal(0,speed * math.sqrt(0.1))
+                        yi = Y[i-1] + np.random.normal(0,speed * math.sqrt(0.1))
+                        zi = Z[i-1] + np.random.normal(0,speed * math.sqrt(0.1))
                 
                         if xi <= xlims[1] and xi >= xlims[0] and yi <= ylims[1] and yi >= ylims[0] and zi <= zlims[1] and zi >= zlims[0] :
                             X.append(xi)
@@ -267,13 +288,19 @@ class fly:
                             Z.append(zi)
                         else:
                         
-                            distance = [- X[i-1] + x0, - Y[i-1] + y0, -Z[i-1] + z0]
+                            distance = [x0 - X[i-1], y0 - Y[i-1], z0 - Z[i-1]]
+                            #print(distance)
                             norm = math.sqrt(distance[0] ** 2 + distance[1] ** 2 + distance[2]**2)
+                            if norm == 0:
+                                print(f"the norm is {norm} and the distances are {distance} \n xi is {xi} yi is {yi} and zi is {zi} and the initial points are {x0} {y0} {z0} \n",
+                                f"cognition is {cognition}, speed is {speed} \n",
+                                speed * math.sqrt(0.1))
+                            #print(f"norm = {norm}")
                             direction = [distance[0] / norm, distance[1] / norm, distance[2]/norm]
                         #bullet_vector = [direction[0] * math.sqrt(2), direction[1] * math.sqrt(2)]
-                            xi = X[i-1] + direction[0] * speed * dt
-                            yi = Y[i-1] + direction[1] * speed * dt
-                            zi = Z[i-1] + direction[2] * speed * dt
+                            xi = X[i-1] + direction[0] * speed# * dt
+                            yi = Y[i-1] + direction[1] * speed# * dt
+                            zi = Z[i-1] + direction[2] * speed# * dt
                         #print(xi,yi,zi)
                             X.append(xi)
                             Y.append(yi)
@@ -308,20 +335,18 @@ class fly:
         
         
         #ax.set_title('The DGRP Hunger Games')
+        
 
 
-        #show()
-        Consumption = Consumption/(60*60*60) # correction for time for higher speeds
-        print("Consumption,","Victory,","Time", ":")
+        show()
+        #Consumption = Consumption/(60*60*60) # correction for time for higher speeds
+        #print(f"The number of trials is {trial} and bad ones is {trial_B}")
+        #print("Consumption,","Victory,","Trials", ":")
         return [Consumption,V,T] #Consumption time and number of victory
 
 
     if __name__ == "__main__":
         sim(self)
-
-
-
-
 
 
 
