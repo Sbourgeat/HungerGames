@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 
 #
-N = 1360
+N = 1360/2
 mu_cognition = 0.5 # alpha
 mu_speed = 50 # cm.sec-1
 mu_fecundity = 10
@@ -50,7 +50,7 @@ fecundity = np.random.normal(mu_fecundity, sigma_fecundity, N)
 # FLy ait speed 15 mm/sec https://elifesciences.org/articles/65878
 
 
-N = 1360
+N = 1360/2
 
 mu_cognition = 50 #mm
 
@@ -129,7 +129,7 @@ I = 0
 start_time = time.time()
 
 l =len(C)
-#l=5
+#l=2
 
 
 for i in tqdm(range(l)) :
@@ -189,7 +189,8 @@ for i in range(len(df)):
 df['sum_cognition']= df_COG
 
 
-df.to_csv(index=False)
+print("Saving the results")
+df.to_csv("Res.csv",index=False)
 
 
     
